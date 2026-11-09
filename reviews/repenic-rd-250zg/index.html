@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repenic RD-250ZG review · Solgaard Lab</title>
+<meta name="description" content="Hands-on ZHA review of the Repenic RD-250ZG Zigbee smart dimmer: direct bindings that keep working with Home Assistant and the coordinator offline, energy monitoring, and one big omission.">
+<meta property="og:title" content="Repenic RD-250ZG Zigbee Smart Dimmer: hands-on ZHA review">
+<meta property="og:description" content="Direct bindings, offline control and energy monitoring, tested on a real ZHA network.">
+<meta property="og:url" content="https://lab.solgaard.uk/reviews/repenic-rd-250zg/">
+<meta property="og:image" content="https://lab.solgaard.uk/reviews/repenic-rd-250zg/dimmer.jpeg">
+<link rel="canonical" href="https://lab.solgaard.uk/reviews/repenic-rd-250zg/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="../../" aria-label="Solgaard Lab, home">
+      <img src="../../favicon.svg" alt="" width="28" height="28">
+      <span>Solgaard Lab</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="../../#projects">Projects</a>
+      <a href="../../#reviews">Reviews</a>
+      <a href="../../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap article">
+  <p class="eyebrow"><a href="../../#reviews">Reviews</a> · Zigbee dimmer</p>
+  <h1>Repenic RD-250ZG Zigbee Smart Dimmer: hands-on ZHA review, direct bindings and energy monitoring</h1>
+  <p class="byline">Hans Solgaard · 27 October 2026</p>
+  <p class="origin">First published on the
+    <a href="https://community.home-assistant.io/t/repenic-rd-250zg-zigbee-dimmer-hands-on-zha-review-direct-binding-offline-control/1030457">Home Assistant community forum</a>.
+    Questions and comments are welcome there.</p>
+
+  <h2 id="tldr">TL;DR</h2>
+  <p><strong>The Repenic RD-250ZG is the nicest-looking and best-feeling dimmer I've tested, Zigbee or otherwise.</strong>
+    It's expensive (£119 for the two-gang version tested, £79 for single-gang), but the premium design, excellent rotary
+    controls and solid ZHA integration make it a compelling product.</p>
+  <p><strong>What impressed me:</strong></p>
+  <ul>
+    <li>Beautiful minimalist design, excellent tactile controls and smooth LED dimming.</li>
+    <li>No neutral required, straightforward installation and replaceable dimmer modules.</li>
+    <li>Native ZHA support without custom quirks.</li>
+    <li>Direct On/Off and dimming bindings from both the IKEA RODRET and Sonoff Orb remain functional with Home Assistant
+      and the Zigbee coordinator offline, including when both are unavailable.</li>
+    <li>Reliable state synchronisation, configurable power restoration and working energy monitoring.</li>
+    <li>Identified as a Zigbee Router, with mesh connectivity visible in ZHA.</li>
+  </ul>
+  <p><strong>The biggest disappointment:</strong> No outbound direct Zigbee binding. It can be controlled by other Zigbee
+    devices, but its rotary controls cannot directly operate lights elsewhere on the Zigbee network.</p>
+  <p class="verdict"><strong>Verdict:</strong> Expensive, but I'd buy more. If Repenic added outbound binding, it would be
+    very close to my ideal Zigbee dimmer.</p>
+
+  <p>I've been testing the Repenic RD-250ZG, specifically the two-gang matt-white model, with Home Assistant and ZHA. I
+    wanted to examine not just whether it pairs and dims, but what its Zigbee capabilities really are, how it behaves
+    during failures, and how well it works with other devices.</p>
+  <p>This test also brought together three projects I've been working on:</p>
+  <ul>
+    <li><a href="https://community.home-assistant.io/t/zha-bindings-manager-visual-manager-for-zha-zigbee-direct-bindings-graph-table-view-drag-and-drop-bind-unbind/1016911">ZHA Bindings Manager</a>,
+      for visualising, creating and inspecting direct Zigbee bindings.</li>
+    <li><a href="https://hsolgaard.github.io/zigbee-capabilities/">Zigbee Capabilities Database</a>, which records what
+      devices actually expose, including input/output clusters and binding direction.</li>
+    <li><a href="https://github.com/hsolgaard/lighting-manager">Lighting Manager</a>, which helps organise devices into
+      rooms and surface them in my Home Assistant lighting dashboard.</li>
+  </ul>
+  <p>My first impression? It's the nicest dimmer I've seen, whether Zigbee or conventional. The technical results are
+    mostly very good too, although I found one limitation that would stop me using it in some installations.</p>
+
+  <aside class="disclosure">
+    <h3>Disclosure</h3>
+    <p>Repenic provided the dimmer free of charge for testing. The product links contain affiliate tracking, meaning I may
+      receive a small commission if you purchase through them, at no additional cost to you. The review reflects my own
+      independent testing and opinions. <a href="../../#reviews">How reviews work</a>.</p>
+  </aside>
+
+  <h2 id="product">1. Product and installation</h2>
+  <p>Tested unit: Repenic RD-250ZG, two-gang, matt white with white knobs. The manufacturer's listed prices at the time of
+    review were £119 for two-gang and £79 for single-gang.
+    <a href="https://www.repenic.com/products/smart-dimmer-white-1-2-3-4-gang/?ref=ZHABindingManager" rel="sponsored">Product page</a>.</p>
+  <figure>
+    <img src="dimmer.jpeg" width="690" height="138" alt="The two-gang Repenic RD-250ZG dimmer in matt white with white knobs">
+  </figure>
+  <p>The faceplate is stainless steel with a beautiful matt-white finish. The slim, understated design is what first caught
+    my eye, with no indicator lights or unnecessary decoration. The rotary controls turn smoothly, with a subtle, tactile
+    click-like feel that makes fine adjustment easy. Pressing a knob to switch the light on or off has a satisfying,
+    positive action. It really does look and feel like a premium product.</p>
+  <p>I installed the switch myself. No neutral wire was required, it fitted my back box without difficulty (Repenic
+    specifies a minimum depth of 25mm), and the supplied instructions were exceptionally clear. ZHA pairing was
+    straightforward: press the knob twice, holding the second press for three seconds, as described in the manual.</p>
+  <p>The two-gang version arrived with its individual RD-250ZG modules separate from the common faceplate, so I assembled
+    them. This was easy. The modular approach is more than cosmetic:
+    <a href="https://www.repenic.com/products/smart-dimmer-module/?ref=ZHABindingManager" rel="sponsored">Repenic sells replacement smart dimmer modules separately</a>
+    (listed at £41), meaning an individual module can be replaced without repurchasing the entire two-gang assembly.</p>
+
+  <h2 id="at-a-glance">2. At a glance: verified findings</h2>
+  <p>The following reflects what I actually tested, rather than a reproduction of the specification sheet.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Area</th><th>Finding</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>ZHA pairing</td><td>Recognised natively, without a custom quirk</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Physical controls</td><td>Immediate on/off response; smooth, precise rotary dimming</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Lighting loads</td><td>Conventional 40W bulb and dimmable LED both worked</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Minimum brightness</td><td>Stable, no visible flicker in tested setup</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Inbound direct binding</td><td>On/Off and Level Control from IKEA RODRET</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Multiple controllers</td><td>RODRET and Sonoff SNZB-01M Orb both control the dimmer</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Home Assistant stopped</td><td>Both RODRET and Sonoff Orb retained full direct-bound On/Off and dimming control.</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Coordinator offline</td><td>Both wireless controllers continued switching and dimming, including with HA also unavailable.</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>ZHA state feedback</td><td>On/off and brightness track both physical and bound control</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Power interruption</td><td>Bindings retained; configurable restoration settings worked</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>On Level</td><td>255 restores last brightness; lower values set switch-on level</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Electrical monitoring</td><td>Voltage, current, power and cumulative energy update</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Zigbee routing</td><td>ZHA identifies device as Router; network-map links visible</td><td><span class="status info">Confirmed classification</span></td></tr>
+        <tr><td>Relaying another device's traffic</td><td>Not independently demonstrated</td><td><span class="status none">Not tested</span></td></tr>
+        <tr><td>Outbound direct binding</td><td>No outbound On/Off or Level Control support in my scan</td><td><span class="status bad">Not supported in scan</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Environment: ZHA using a SONOFF Dongle-M coordinator; Repenic model RD-250ZG, firmware 0x0000000c, no
+    custom ZHA quirk.</p>
+
+  <h2 id="binding">3. Direct Zigbee binding: two controllers, one dimmer</h2>
+  <p>This is where my ZHA Bindings Manager proved particularly useful.</p>
+  <p>I first bound an IKEA RODRET wireless dimmer to the Repenic using On/Off (0x0006) and Level Control (0x0008). Both
+    worked immediately. I could switch the hardwired light on/off and adjust brightness smoothly using the RODRET, without
+    any Home Assistant automation or YAML.</p>
+  <p>Next, I used the same graphical tool to add a Sonoff SNZB-01M Orb, again binding On/Off and Level Control. It worked
+    too. The Repenic now responds independently to its own knob, the RODRET and the Orb.</p>
+  <figure>
+    <img src="bindings.png" width="690" height="217" loading="lazy" alt="ZHA Bindings Manager showing four inbound bindings to the dimmer">
+    <figcaption>Bindings Manager: four inbound bindings to ZB-TestBed-Switch-Dim1</figcaption>
+  </figure>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Source controller</th><th>Endpoint</th><th>Directly bound clusters</th><th>Target</th></tr></thead>
+      <tbody>
+        <tr><td>IKEA RODRET</td><td>1</td><td>On/Off, Level Control</td><td>Repenic endpoint 1</td></tr>
+        <tr><td>Sonoff SNZB-01M Orb</td><td>3</td><td>On/Off, Level Control</td><td>Repenic endpoint 1</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>To verify that this was genuinely device-to-device control, I tested both wireless controllers with Home Assistant
+    stopped and with the Zigbee coordinator offline, including when both were unavailable simultaneously. In every case,
+    the IKEA RODRET and Sonoff Orb continued switching and dimming the Repenic normally. This is more than the hardwired
+    rotary knob continuing to work: both remote controllers retained their full On/Off and Level Control functionality
+    without HA automations or a running coordinator. The Zigbee devices still need a viable wireless communication path,
+    but crucially, they don't depend on Wi-Fi, Home Assistant or the Zigbee coordinator being operational. This means you
+    can still use your wireless switches to control the lights even if your Wi-Fi goes down or your entire Home Assistant
+    system is unavailable.</p>
+
+  <h2 id="scan">4. What my Zigbee capabilities scan revealed</h2>
+  <p>I scanned the RD-250ZG using the capability-exploration functions in my Bindings Manager and submitted its results to
+    my <a href="https://hsolgaard.github.io/zigbee-capabilities/">Zigbee Capabilities Database</a>.</p>
+  <figure>
+    <img src="database.png" width="612" height="500" loading="lazy" alt="Zigbee Capabilities Database entry for the Repenic RD-250ZG">
+    <figcaption>Zigbee Capabilities Database entry for Repenic RD-250ZG</figcaption>
+  </figure>
+  <p>The important distinction is inbound versus outbound binding:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Capability</th><th>RD-250ZG result</th></tr></thead>
+      <tbody>
+        <tr><td>Receive On/Off through a direct binding</td><td>Yes, tested</td></tr>
+        <tr><td>Receive Level Control through a direct binding</td><td>Yes, tested</td></tr>
+        <tr><td>Send outbound On/Off commands through direct binding</td><td>Not supported in scan</td></tr>
+        <tr><td>Send outbound Level Control commands through direct binding</td><td>Not supported in scan</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>This is my biggest criticism of the device. It can be controlled directly by other Zigbee devices, but its beautiful
+    rotary controls cannot themselves be bound to control a separate Zigbee load elsewhere. That matters if I want the
+    Repenic's appearance at the wall while controlling a remotely wired light, or if I want one rotary control to operate
+    multiple circuits without depending on Home Assistant.</p>
+  <p>To be clear, wireless multi-way control of the Repenic's own hardwired light works very well, as the RODRET and Orb
+    tests show. Repenic also offers a separate, compatible wired multi-way dimming arrangement. Neither is the same as
+    outbound Zigbee binding from the RD-250ZG. Repenic's rocker range advertises remote-control / Find &amp; Bind
+    capabilities, which I'd like to test separately.</p>
+
+  <h2 id="dimming">5. Smooth dimming and synchronisation with Home Assistant</h2>
+  <p>The rotary dial allows small changes very precisely, and I found the dimming smooth and stable right down to the
+    lowest brightness during my tests. Both the conventional 40W bulb and a dimmable LED worked well. I haven't done an
+    exhaustive LED compatibility test across different bulbs or drivers.</p>
+  <p>The Repenic also reports its state properly. Adjusting brightness from the Repenic knob or either directly bound
+    remote updates the brightness in Home Assistant; switching on/off updates the on/off state. Commands from the HA
+    dashboard work too, and the physical and direct-bound controllers continue functioning afterwards.</p>
+  <p>I used <a href="https://github.com/hsolgaard/lighting-manager">Lighting Manager</a> to assign the device to my office.
+    It then appeared automatically in my Home Assistant lighting dashboard, including a brightness slider.</p>
+  <figure>
+    <img src="dashboard.png" width="690" height="426" loading="lazy" alt="Home Assistant lighting dashboard with the Repenic brightness slider">
+    <figcaption>Home Assistant dashboard showing the Repenic brightness slider</figcaption>
+  </figure>
+  <p>For me, that makes a neat end-to-end demonstration: Capabilities Database to establish what the device supports,
+    Bindings Manager to wire up device-to-device behaviour, and Lighting Manager to organise it in HA.</p>
+
+  <h2 id="power-on">6. Configurable switch-on and mains-restoration behaviour</h2>
+  <p>ZHA exposes two useful but different settings which I tested.</p>
+  <p>On Level controls brightness on a normal switch-on:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Setting</th><th>Observed result</th></tr></thead>
+      <tbody>
+        <tr><td>255</td><td>Restores the previous brightness</td></tr>
+        <tr><td>Below 255</td><td>Switches on at the configured level, irrespective of last brightness</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The configured On Level is not a brightness cap. You can still turn the light up beyond that level using the knob or
+    wireless remote.</p>
+  <p>Power-on behaviour controls what happens when mains power returns. All four settings worked as configured: Off, On,
+    Toggle and PreviousValue. The direct Zigbee binding also survived a mains interruption and still worked once power was
+    restored.</p>
+  <p>Configuration controls are also visible in the device page screenshot below.</p>
+
+  <h2 id="electrical">7. Electrical measurements: all four sensors work</h2>
+  <p>ZHA creates voltage, current, instantaneous power and cumulative energy entities for the RD-250ZG. I tested them with
+    the light on and off, including at different brightness levels.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Measurement</th><th>Observed behaviour</th></tr></thead>
+      <tbody>
+        <tr><td>Voltage</td><td>Values around 231–236V</td></tr>
+        <tr><td>Current</td><td>0.00A with light off, increasing when on</td></tr>
+        <tr><td>Instantaneous power</td><td>0W off; approximately 17.5W at lower brightness and 30.3W at higher brightness</td></tr>
+        <tr><td>Cumulative energy</td><td>Confirmed to accumulate and update in Home Assistant</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The increasing power reading as I turned up the brightness is particularly useful evidence that these are functioning
+    load measurements, not merely exposed but inactive Zigbee entities.</p>
+  <figure>
+    <img src="device-page.jpeg" width="690" height="437" loading="lazy" alt="Home Assistant device page with electrical sensors, configuration and Router identification">
+    <figcaption>Home Assistant device page showing electrical monitoring, configuration and Router identification</figcaption>
+  </figure>
+
+  <h2 id="router">8. Zigbee Router: what I could verify</h2>
+  <p>Despite not requiring a neutral wire, ZHA identifies the RD-250ZG as a Router, and it appears as a router in the ZHA
+    network map, with multiple mesh links.</p>
+  <p>Router identification is also visible in the device page screenshot above.</p>
+  <p>That's enough to confirm its router classification and participation in the mesh topology. The map alone doesn't
+    prove another device has actually forwarded packets through it, and I haven't separately captured a parent-child
+    relationship or traffic trace demonstrating that. I wouldn't describe throughput or routing performance on the
+    evidence gathered so far.</p>
+
+  <h2 id="improve">9. What I'd improve</h2>
+  <ul>
+    <li>Outbound direct Zigbee binding. This is the main omission for me. I'd love the rotary controls to be usable as
+      independent Zigbee controllers for remote loads, alongside their existing hardwired function.</li>
+    <li>A neater multi-gang live link. The modules can of course share the same incoming live supply, using a properly
+      installed short link between their live terminals; I'm not suggesting they need separate incoming live feeds. I'd
+      simply have appreciated a suitable manufacturer-supplied bridge or linking accessory, rather than making up the
+      connection myself. It would be a small convenience improvement, not a fundamental wiring problem.</li>
+    <li>Price. The two-gang version costs £119. It's expensive even given how attractive and well made it is.</li>
+  </ul>
+
+  <h2 id="verdict">10. Verdict</h2>
+  <p>Overall, I'm very impressed. The design and tactile quality are exceptional, and the technical side stands up well to
+    scrutiny: native ZHA support, smooth dimming, accurate state feedback, functional electrical monitoring and reliable
+    inbound direct binding from multiple controllers.</p>
+  <p>The lack of outbound direct binding is genuinely frustrating, particularly given how much I'd like to use these
+    controls in more complex Zigbee lighting arrangements. Still, for a circuit actually wired to the dimmer, there's a
+    great deal to like.</p>
+  <p>Would I buy more at this price? Yes. Not because it's good value in an absolute sense, but because I'd be happy to pay
+    for this particular combination of design, feel and functionality.</p>
+  <p>If others have used this model with ZHA, or experimented with Repenic's rockers and outbound binding, I'd be very
+    interested to compare notes, in the
+    <a href="https://community.home-assistant.io/t/repenic-rd-250zg-zigbee-dimmer-hands-on-zha-review-direct-binding-offline-control/1030457">forum thread</a>
+    or at <a href="mailto:lab@solgaard.uk">lab@solgaard.uk</a>.</p>
+
+  <h2 id="further">Projects and further reading</h2>
+  <ul>
+    <li><a href="https://github.com/hsolgaard/zha-bindings-manager">ZHA Bindings Manager on GitHub</a></li>
+    <li><a href="https://hsolgaard.github.io/zigbee-capabilities/">Zigbee Capabilities Database</a></li>
+    <li><a href="https://github.com/hsolgaard/lighting-manager">Lighting Manager on GitHub</a></li>
+    <li><a href="https://www.repenic.com/products/smart-dimmer-white-1-2-3-4-gang/?ref=ZHABindingManager" rel="sponsored">Repenic RD-250ZG product page</a></li>
+    <li><a href="https://www.repenic.com/products/smart-dimmer-module/?ref=ZHABindingManager" rel="sponsored">Repenic replacement smart dimmer module</a></li>
+    <li><a href="https://www.zigbee2mqtt.io/guide/usage/binding.html">Zigbee2MQTT: Direct binding</a></li>
+  </ul>
+
+  <p class="back"><a class="btn" href="../../#reviews">← All reviews</a>
+    <a class="btn" href="https://community.home-assistant.io/t/repenic-rd-250zg-zigbee-dimmer-hands-on-zha-review-direct-binding-offline-control/1030457">Discuss on the forum</a></p>
+</main>
+
+<footer class="wrap foot">
+  <p>Solgaard Lab · Hans Solgaard · Not affiliated with Home Assistant, the Connectivity Standards Alliance or any
+    manufacturer reviewed here.</p>
+</footer>
+</body>
+</html>
