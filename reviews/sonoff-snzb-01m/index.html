@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SONOFF SNZB-01M Orb review · Solgaard Lab</title>
+<meta name="description" content="Hands-on ZHA review of the SONOFF SNZB-01M Orb 4-in-1 scene button: direct bindings on all four buttons, offline control, and why the first press often does nothing.">
+<meta property="og:title" content="SONOFF SNZB-01M Orb: hands-on ZHA review">
+<meta property="og:description" content="Direct bindings, offline control and the first press that doesn't work, tested on a real ZHA network.">
+<meta property="og:url" content="https://lab.solgaard.uk/reviews/sonoff-snzb-01m/">
+<meta property="og:image" content="https://lab.solgaard.uk/reviews/sonoff-snzb-01m/photos.jpeg">
+<link rel="canonical" href="https://lab.solgaard.uk/reviews/sonoff-snzb-01m/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="../../" aria-label="Solgaard Lab, home">
+      <img src="../../favicon.svg" alt="" width="28" height="28">
+      <span>Solgaard Lab</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="../../#projects">Projects</a>
+      <a href="../../#reviews">Reviews</a>
+      <a href="../../#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap article">
+  <p class="eyebrow"><a href="../../#reviews">Reviews</a> · Zigbee remote</p>
+  <h1>SONOFF SNZB-01M "Orb" 4-in-1 Smart Scene Button: hands-on ZHA review, direct bindings and the first press that doesn't work</h1>
+  <p class="byline">Hans Solgaard · 14 November 2026</p>
+  <p class="origin">First published on the
+    <a href="https://community.home-assistant.io/t/sonoff-snzb-01m-orb-4-in-1-smart-scene-button-hands-on-zha-review-direct-bindings-and-the-first-press-that-doesn-t-work/1034514">Home Assistant community forum</a>.
+    Questions and comments are welcome there.</p>
+
+  <h2 id="tldr">TL;DR</h2>
+  <p><strong>What I liked:</strong></p>
+  <ul>
+    <li>Four buttons, each with single, double, triple and long press: 16 actions from one £17 remote.</li>
+    <li>Since firmware 1.1.0, all four buttons support direct Zigbee binding for On/Off and dimming, to single lights or
+      to groups. The remote talks straight to the lights, with no Home Assistant needed.</li>
+    <li>Bound lights keep working with Home Assistant stopped and with the Zigbee coordinator offline.</li>
+    <li>Native ZHA support, battery reporting, and bindings that survive a battery change.</li>
+    <li>Excellent value: very few remotes at this price do direct binding properly.</li>
+  </ul>
+  <p><strong>The biggest disappointment:</strong> a single press doesn't <em>toggle</em>. Each button remembers whether it
+    last sent On or Off and sends the opposite, so once a light has been switched any other way, the next press does
+    nothing.</p>
+  <p class="verdict"><strong>Verdict:</strong> 3/5. A very capable, great-value remote, held back by one firmware decision.
+    A Toggle option would make it close to an easy recommendation for multi-way setups (4/5 if the toggle issue is
+    solved).</p>
+
+  <p>I've been living with three SONOFF SNZB-01M "Orb" remotes for a while: one in the lounge and two in bedrooms. They're
+    all part of multi-way lighting setups, where the same lights are also controlled by other buttons, other switches and
+    the Home Assistant app.</p>
+  <p>For me, the most important thing a Zigbee remote can do is <strong>direct binding</strong>. The remote talks straight
+    to the light, so it keeps working even if Home Assistant is restarting, the server is down or the coordinator is
+    unplugged. A light switch that depends on a server isn't really a light switch. I'm determined to have lights that
+    work without relying on the coordinator or Home Assistant, and that's the lens for this whole review.</p>
+  <p>This review also brings together two of my own projects:</p>
+  <ul>
+    <li><a href="https://github.com/hsolgaard/zha-bindings-manager-integration">ZHA Bindings Manager</a>, which I used to
+      set up, inspect and test every binding in this review, and to see exactly what the remote sends.</li>
+    <li><a href="https://zigbee.solgaard.uk/">Zigbee Capabilities Database</a>, which records what devices actually
+      expose. I submitted a full scan of the Orb as part of this review.</li>
+  </ul>
+
+  <aside class="disclosure">
+    <h3>Disclosure</h3>
+    <p>I bought these remotes myself. SONOFF didn't ask me to review them, didn't provide them and has had no input into
+      this review. There are no affiliate links. <a href="../../#how-reviews-work">How reviews work</a>.</p>
+    <p>I should also say that I'm a big fan of SONOFF. They have an excellent range of Zigbee devices at very affordable
+      prices, and a lot of my home runs on them. The quirks and small annoyances in this review don't change that.</p>
+  </aside>
+
+  <h2 id="product">1. Product and installation</h2>
+  <p>Tested: SONOFF SNZB-01M "Orb", firmware 1.1.0. Around <strong>£17 on Amazon</strong> at the time of writing.
+    <a href="https://sonoff.tech/en-uk/products/sonoff-orb-4-in-1-zigbee-smart-scene-button-snzb-01m">Product page</a>.</p>
+  <figure>
+    <img src="photos.jpeg" width="780" height="156" alt="The SONOFF SNZB-01M Orb: front, back label, mounted on a wall, and the battery compartment with reset button and mode switch">
+    <figcaption>Front, back, wall-mounted, and the battery compartment with reset button and mode switch</figcaption>
+  </figure>
+  <p>The Orb is a round, four-button remote. The design is pleasant, though not premium, which is fair at £17. I was
+    originally looking for a battery-powered wall switch or rocker that does direct binding properly, and possibly
+    dimming, but couldn't find one that does both. The Orb was the closest fit: four buttons, direct binding, and less
+    than half the price of the closest equivalent I found, the Philips Hue Tap Dial Switch (£36–45 on Amazon at the time
+    of writing). Two of mine sit loose and one is mounted on a wall.</p>
+  <p>Inside, it runs on a <strong>CR2477</strong> coin cell, behind a sealed cover that you open with a coin. There's a
+    <strong>reset button</strong>, and a small <strong>mode switch</strong> that chooses between Zigbee mode and SONOFF's
+    eWeLink-Remote mode. Make sure it's set to Zigbee before pairing with ZHA.</p>
+  <p>Pairing was simple and worked exactly as SONOFF describes. In Zigbee mode, the Orb starts in pairing mode the first
+    time it's powered up, with its indicator flashing slowly. If it's missed, a 5-second press on the reset button starts
+    pairing again. ZHA recognised it first time, with all four buttons, and it uses ZHA's built-in SNZB-01M quirk.
+    Firmware updates through ZHA are just as easy.</p>
+
+  <h2 id="at-a-glance">2. At a glance: verified findings</h2>
+  <p>The following reflects what I actually tested, rather than a reproduction of the specification sheet.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Area</th><th>Finding</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>ZHA pairing</td><td>Recognised, with ZHA's built-in quirk for the SNZB-01M</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>HA actions</td><td>16 triggers: single, double, triple and long press on each of the 4 buttons</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Direct binding, all buttons</td><td>On/Off and Level Control from all four buttons (firmware 1.1.0)</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Group binding</td><td>One button controls a ZHA group of two dimmers</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Home Assistant stopped</td><td>Bound lights still switch and dim</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Coordinator offline</td><td>Bound lights still switch and dim</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Dimming</td><td>Long press dims smoothly; release stops; stays in step</td><td><span class="status ok">Passed</span></td></tr>
+        <tr><td>Single-press behaviour</td><td>Sends On or Off from its own memory, not Toggle</td><td><span class="status bad">Issue found</span></td></tr>
+        <tr><td>Setting to change it</td><td>None found on any button</td><td><span class="status none">Not available</span></td></tr>
+        <tr><td>Battery</td><td>Percentage reported; bindings survive a battery change</td><td><span class="status ok">Passed</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Environment: ZHA with a SONOFF Dongle-M coordinator. SONOFF SNZB-01M on firmware 1.1.0 (OTA file version
+    0x00001100), with ZHA's built-in quirk.</p>
+
+  <h2 id="binding">3. Direct Zigbee binding: four buttons, a group, and no Home Assistant needed</h2>
+  <p>With ZHA Bindings Manager, I bound all four buttons of one Orb to the lights in my bedroom, each for On/Off and Level
+    Control. I dragged each button onto its light on the Map tab, which opens the binding in the Advanced tab ready to
+    confirm. Each binding worked first time and took seconds, even though the Orb is a sleeping battery device. My first
+    Orb pre-dates ZHA Bindings Manager, and binding that one by hand with zha-toolkit service calls was a very different,
+    much fiddlier experience. I only have two dimmers in that room, so buttons 3 and 4 share a dimmer with button 1.
+    Every button switched and dimmed its light.</p>
+  <figure>
+    <img src="bindings.png" width="780" height="331" loading="lazy" alt="ZHA Bindings Manager showing all four Orb buttons bound for On/Off and Level Control, all Valid">
+    <figcaption>All four buttons bound for On/Off and Level Control, all Valid</figcaption>
+  </figure>
+  <p>Next, I used ZHA Bindings Manager's guided setup to bind button 1 to a <strong>ZHA group</strong> containing both
+    bedroom dimmers. It created the group, bound the button, and tested it. Both lights responded together, switching and
+    dimming.</p>
+  <figure>
+    <img src="group-bind1.png" width="600" height="531" loading="lazy" alt="Guided setup step 1: choosing button 1, the two bedroom lights, and a new group">
+    <figcaption>Step 1: choose the button and the lights, and control them through a new group</figcaption>
+  </figure>
+  <figure>
+    <img src="group-bind2.png" width="600" height="384" loading="lazy" alt="Guided setup step 2: review of the group and the On/Off and Level Control clusters">
+    <figcaption>Step 2: review</figcaption>
+  </figure>
+  <figure>
+    <img src="group-bind3.png" width="600" height="163" loading="lazy" alt="Guided setup step 3: group created, press a button on the remote and bind">
+    <figcaption>Step 3: the group is created; wake the remote and bind</figcaption>
+  </figure>
+  <figure>
+    <img src="group-bind5.png" width="600" height="294" loading="lazy" alt="Guided setup result: both bindings confirmed and the button test passed">
+    <figcaption>Result: both bindings confirmed, and the button test passed</figcaption>
+  </figure>
+  <p>To prove this is real device-to-device control, I tested it with <strong>Home Assistant stopped</strong>, and again
+    with the <strong>Zigbee coordinator offline</strong>. Switching and dimming kept working both times.</p>
+  <p>Long press dims smoothly in either direction, and releasing the button stops it. Dimming <strong>stays in
+    step</strong> even when the light has been dimmed some other way first. Remember that, because it matters in
+    section 5.</p>
+  <p>This is how I use my three Orbs day to day:</p>
+  <ul>
+    <li><strong>Bedroom 1:</strong> buttons 1 and 2 switch and dim two lights, by direct binding only.</li>
+    <li><strong>Lounge:</strong> buttons 1 and 2 are bound to SONOFF lights. Buttons 3 and 4 control non-Zigbee plugs
+      through Home Assistant, and a triple press on button 4 turns off every light in the room.</li>
+    <li><strong>Bedroom 2:</strong> buttons 1–3 switch three Zigbee lights by direct binding. Button 4 runs an automation:
+      if any light in the room is on, it turns them all off; if all are off, it turns them all on.</li>
+  </ul>
+  <p>That mix is where the Orb shines. Single presses work directly without Home Assistant, and the multi-press actions
+    add extra automations on top.</p>
+
+  <h2 id="scan">4. What my Zigbee capabilities scan revealed</h2>
+  <p>I scanned all four buttons with ZHA Bindings Manager and submitted the results to my
+    <a href="https://zigbee.solgaard.uk/?manufacturer=SONOFF&amp;model=SNZB-01M">Zigbee Capabilities Database</a>. It's
+    the first record of the Orb with every button scanned.</p>
+  <figure>
+    <img src="database.png" width="700" height="585" loading="lazy" alt="Zigbee Capabilities Database entry for the SONOFF SNZB-01M">
+    <figcaption>Zigbee Capabilities Database entry for the SONOFF SNZB-01M</figcaption>
+  </figure>
+  <p>The database lists it as able to switch, dim and trigger scenes on other devices directly. That's based on what the
+    remote declares about itself, which is strong evidence but not a guarantee. This review adds the tested side:
+    switching and dimming through bindings work on all four buttons, but a single press sends On or Off rather than
+    Toggle.</p>
+  <p>I've also added a "How does it behave" report to the database entry, so the tested results sit alongside the scan
+    for anyone checking the Orb: direct control works, a press sends On and Off (not Toggle), no setting is needed or
+    available, hold-to-dim works, and bindings survive a battery change.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Button (endpoint)</th><th>Sends (binding)</th><th>Other clusters</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>On/Off, Level Control, Scenes, Groups</td><td>Basic, battery, Identify, Poll Control, SONOFF button cluster</td></tr>
+        <tr><td>2–4</td><td>On/Off, Level Control</td><td>Basic, SONOFF button cluster</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The firmware history matters here. SONOFF's release notes for <strong>firmware 1.1.0</strong> say it added the On/Off
+    cluster to buttons 2, 3 and 4. Before that, only button 1 could switch a light through a binding. That's a genuinely
+    useful update. One thing to know: ZHA doesn't re-read a device's buttons after a firmware update, so if your Orb was
+    paired on older firmware, <strong>re-pair it after updating</strong> before binding buttons 2–4.</p>
+  <p>I also checked every cluster on every button, including SONOFF's own (using SONOFF's manufacturer code), for any
+    setting that changes how a press behaves. There isn't one. That brings me to the main finding.</p>
+
+  <h2 id="first-press">5. The first press that doesn't work</h2>
+  <p>From the start, I've had one niggle with the Orbs: the first press often does nothing, and the second press always
+    works. It still happens today. My family has noticed it too, and some of them have given up on the Orbs, calling the
+    buttons "buggy". I assumed what most people would assume about a battery remote: that it was asleep, slow to wake up,
+    or occasionally losing presses.</p>
+  <p>So I tested it properly. I left an Orb untouched for a few hours, enabled ZHA's debug logging, and pressed a button
+    once. The light didn't respond, but the log showed that the Orb had woken up straight away and sent its press. The
+    dimmer had even received a command and replied within two seconds.</p>
+  <p>The Orb wasn't asleep, and it wasn't losing presses. It was sending the <strong>wrong command</strong>.</p>
+  <p>To confirm it, I bound one button to the Zigbee coordinator as well, so Home Assistant could see exactly what the
+    remote sends. Three presses in a row produced <strong>Off, On, Off</strong>. The Orb never sends <em>Toggle</em>, the
+    Zigbee command made exactly for this. Instead, each button remembers whether it last sent On or Off, and sends the
+    opposite.</p>
+  <figure>
+    <img src="event-off1.png" width="600" height="384" loading="lazy" alt="Home Assistant event for press 1: On/Off cluster, command off">
+    <figcaption>Press 1, 19:42:31: On/Off cluster (6), command <code>off</code></figcaption>
+  </figure>
+  <figure>
+    <img src="event-on.png" width="600" height="384" loading="lazy" alt="Home Assistant event for press 2: On/Off cluster, command on">
+    <figcaption>Press 2, 19:42:34: command <code>on</code></figcaption>
+  </figure>
+  <figure>
+    <img src="event-off2.png" width="600" height="384" loading="lazy" alt="Home Assistant event for press 3: On/Off cluster, command off">
+    <figcaption>Press 3, 19:42:37: command <code>off</code></figcaption>
+  </figure>
+  <p>That works perfectly as long as the Orb is the only thing controlling the light. Once the light has been switched any
+    other way (another switch, the Home Assistant app, an automation, another remote, or <strong>even another button on
+    the same Orb</strong>), the button's memory is out of step. Its next press tells a light that's already off to switch
+    off, so nothing happens. The second press sends On, and everything appears to work again, which is exactly why it
+    felt like a slow or missed first press.</p>
+  <p>The same-Orb case is the easiest to reproduce. With buttons 1 and 3 bound to the same light:</p>
+  <ol>
+    <li>Press button 1: the light turns on.</li>
+    <li>Press button 3: the light turns off.</li>
+    <li>Press button 1: <strong>nothing happens</strong>, because button 1 still thinks the light is on, so it sends
+      Off.</li>
+    <li>Press button 1 again: the light turns on.</li>
+  </ol>
+  <p>In a multi-way setup like mine, where every light has several controls, this happens all the time.</p>
+  <p>Two details are worth adding:</p>
+  <ul>
+    <li><strong>Dimming doesn't have this problem</strong> (section 3), so SONOFF clearly handles it properly in one
+      place.</li>
+    <li><strong>SONOFF's own description says a single press "toggles"</strong>, so this is a gap between what's
+      documented and what the firmware does.</li>
+  </ul>
+  <p>I couldn't find a workaround that doesn't rely on Home Assistant. There's no setting on the remote, and Zigbee has
+    no setting on the light side either. It needs a firmware change.</p>
+
+  <h2 id="home-assistant">6. Home Assistant: 16 actions per remote</h2>
+  <p>With ZHA's built-in quirk, each Orb offers these device triggers in Home Assistant automations:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Button</th><th>Triggers</th></tr></thead>
+      <tbody>
+        <tr><td>First button</td><td>pressed · double clicked · triple clicked · continuously pressed</td></tr>
+        <tr><td>Second button</td><td>pressed · double clicked · triple clicked · continuously pressed</td></tr>
+        <tr><td>Third button</td><td>pressed · double clicked · triple clicked · continuously pressed</td></tr>
+        <tr><td>Fourth button</td><td>pressed · double clicked · triple clicked · continuously pressed</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>That's 16 button actions per remote. There are also device triggers for battery level changes, the device going
+    offline, and firmware updates.</p>
+  <figure>
+    <img src="event-triple.png" width="600" height="384" loading="lazy" alt="Home Assistant event for a triple press on button 3">
+    <figcaption>A triple press arriving in Home Assistant as a <code>triple</code> event from button 3</figcaption>
+  </figure>
+  <ul>
+    <li>A long press arrives in Home Assistant as a single "continuously pressed" (hold) event, with no separate
+      "released" event. Smooth hold-to-dim worked well through the direct binding. I didn't try building the same in a
+      Home Assistant automation.</li>
+    <li>In everyday use the Orb feels a little sluggish compared with my IKEA RODRET. In my logs, the first press after a
+      long idle took about 1.7 seconds to reach the light, against a fraction of a second for later presses. It's
+      noticeable, but every press arrived.</li>
+  </ul>
+
+  <h2 id="battery">7. Battery</h2>
+  <ul>
+    <li>Home Assistant shows the battery percentage.</li>
+    <li>Taking the battery out and putting it back didn't affect the bindings: everything worked straight away
+      afterwards.</li>
+    <li>I haven't run the Orbs long enough to comment on battery life.</li>
+  </ul>
+
+  <h2 id="end-device">8. Zigbee end device</h2>
+  <p>The Orb is a sleepy end device: it wakes when pressed, and otherwise checks in periodically. It talks through a nearby
+    router, its "parent". The device panel in ZHA Bindings Manager shows which one, and how good the link is, alongside
+    everything else about the remote in one place: what it controls, whether its bindings read reliably, its entry in the
+    Zigbee Capabilities Database, how many messages it sends to Home Assistant, and a nightly check that none of its
+    bindings have been lost.</p>
+  <figure>
+    <img src="side-panel.png" width="398" height="838" loading="lazy" alt="ZHA Bindings Manager device panel for the Orb: what it controls, binding reads, database entry, lost-binding checks and its parent router">
+    <figcaption>ZHA Bindings Manager's device panel for the Orb</figcaption>
+  </figure>
+  <p>Moving it around the house is no problem: during testing I took the bedroom Orb to the lounge, and it carried on
+    working there without any intervention. I didn't test what happens when its parent router disappears.</p>
+
+  <h2 id="improve">9. What I'd improve</h2>
+  <ul>
+    <li><strong>Make single press toggle, or make it configurable.</strong> This is the main one. Ideally, add a per-button
+      option through Zigbee's standard On/Off Switch Configuration cluster, with <em>Toggle</em> as a choice. Toggle has
+      its own trade-off (several bound lights can end up mismatched), which is why an option beats a fixed change.
+      Either way, it would fix the "first press doesn't work" experience for anyone using the Orb alongside other
+      switches.</li>
+    <li><strong>Commands for double and triple presses.</strong> Optional binding commands for multi-presses (for
+      example, a scene or "all off") would make the Orb even more useful without Home Assistant. It's a nice-to-have
+      rather than a complaint.</li>
+    <li><strong>A little more responsiveness.</strong> It's slightly slower to react than the best remotes I've
+      used.</li>
+    <li><strong>Document the behaviour.</strong> If On/Off stays the design, say so clearly, rather than describing it as
+      a toggle.</li>
+  </ul>
+
+  <h2 id="verdict">10. Verdict</h2>
+  <p>The Orb gets a lot right. Four buttons, 16 actions in Home Assistant, direct binding on every button since firmware
+    1.1.0, group binding, and lights that keep working with Home Assistant and the coordinator offline. All for around
+    £17, in a space where very few remotes do direct binding properly. And with the right tools, setting the bindings up
+    takes seconds. Among the alternatives I've used, an Aqara remote I own only binds from its first button, and the
+    IKEA RODRET, which is excellent and instant, controls just one light or group: its two buttons are on and off, with
+    dimming on a long press.</p>
+  <p>But the single-press behaviour lets it down exactly where direct binding matters most: in a real multi-way setup.
+    Once anything else touches the light, the next Orb press does nothing, and in my house that's been enough to put some
+    of my family off using them.</p>
+  <p>Would I buy more? I already have several, and yes, I'd still recommend it to anyone who wants direct binding on a
+    budget, as long as they know about the toggle behaviour. <strong>4/5.</strong> It's a capable remote with genuinely
+    useful direct binding, at a price that's hard to argue with. If SONOFF adds a Toggle option, it would be a huge
+    improvement for anyone who values direct binding.</p>
+  <p>None of this changes my view of SONOFF as one of the best-value Zigbee brands around. The fix is small, SONOFF has
+    already shown with firmware 1.1.0 that it improves the Orb after launch, and I'll be sharing these findings with them,
+    asking for Toggle or, better still, a setting to choose between Toggle and On/Off.</p>
+  <p>If you use the Orb with ZHA or Zigbee2MQTT, I'd be interested to compare notes, in the
+    <a href="https://community.home-assistant.io/t/sonoff-snzb-01m-orb-4-in-1-smart-scene-button-hands-on-zha-review-direct-bindings-and-the-first-press-that-doesn-t-work/1034514">forum thread</a>
+    or at <a href="mailto:lab@solgaard.uk">lab@solgaard.uk</a>.</p>
+
+  <h2 id="further">Projects and further reading</h2>
+  <ul>
+    <li><a href="https://sonoff.tech/en-uk/products/sonoff-orb-4-in-1-zigbee-smart-scene-button-snzb-01m">SONOFF SNZB-01M product page</a></li>
+    <li><a href="https://github.com/hsolgaard/zha-bindings-manager-integration">ZHA Bindings Manager on GitHub</a> (Home Assistant integration, available in HACS)</li>
+    <li><a href="https://zigbee.solgaard.uk/?manufacturer=SONOFF&amp;model=SNZB-01M">Zigbee Capabilities Database: SONOFF SNZB-01M</a></li>
+  </ul>
+
+  <p class="back"><a class="btn" href="../../#reviews">← All reviews</a>
+    <a class="btn" href="https://community.home-assistant.io/t/sonoff-snzb-01m-orb-4-in-1-smart-scene-button-hands-on-zha-review-direct-bindings-and-the-first-press-that-doesn-t-work/1034514">Discuss on the forum</a></p>
+</main>
+
+<footer class="wrap foot">
+  <p>Solgaard Lab · Hans Solgaard · Not affiliated with Home Assistant, the Connectivity Standards Alliance or any
+    manufacturer reviewed here.</p>
+</footer>
+</body>
+</html>
